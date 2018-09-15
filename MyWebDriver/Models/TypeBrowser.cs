@@ -4,9 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MyWebDriver
+namespace MyWebDriver.Models
 {
-    public class Class1
+    internal enum TypeBrowser
     {
+        Chrome,
+        Firefox
     }
 }
