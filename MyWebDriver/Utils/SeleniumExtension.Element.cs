@@ -1,5 +1,7 @@
 ﻿using OpenQA.Selenium;
+using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Internal;
+using OpenQA.Selenium.Support.UI;
 using SeleniumExtras.WaitHelpers;
 using System;
 using System.Collections.Generic;
@@ -24,6 +26,25 @@ namespace MyWebDriver.Utils
             }
         }
 
+        public static IWebElement FindElementWithWait(this IWebDriver webDriver, By by, TimeSpan timeOut)
+        {
+            WebDriverWait webDriverWait = new WebDriverWait(webDriver, timeOut);
+            try
+            {
+                return webDriverWait.Until(d => d.FindElement(by));
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        public static void SetAttribute(this IWebElement webElement, string att, string value)
+        {
+            var script = $"arguments[0].setAttribute(\"{att}\", \"{value}\")";
+            var driver = webElement.GetWebDriverFromElement();
+            driver.ExcuteJavascript(script, webElement);
+        }
         public static bool IsVisibleInViewport(this IWebElement webElement)
         {
             var driver = webElement.GetWebDriverFromElement();
@@ -43,6 +64,20 @@ namespace MyWebDriver.Utils
             return Convert.ToBoolean(isVisibleInViewport);
         }
 
+
+        public static void RealClick(this IWebElement webElement)
+        {
+            var driver = webElement.GetWebDriverFromElement();
+            if (driver is ChromeDriver)
+            {
+                var pointOfElement = driver.ElementInfoOnScreen(webElement);
+            }
+            else
+            {
+                webElement.Click();
+            }
+
+        }
 
         public static void ForceClick(this IWebElement webElement)
         {
@@ -67,6 +102,8 @@ namespace MyWebDriver.Utils
             }
         }
 
+        
+
         public static IWebDriver GetWebDriverFromElement(this IWebElement element)
         {
             IWebDriver driver = null;
@@ -84,12 +121,12 @@ namespace MyWebDriver.Utils
             return driver;
         }
 
-        public static void SendText(this IWebElement webElement, string text)
+        public static void SendText(this IWebElement webElement, string text, int miliTime = 200)
         {
             foreach(var c in text)
             {
                 webElement.SendKeys(c.ToString());
-                Task.Delay(200).Wait();
+                Task.Delay(miliTime).Wait();
             }
         }
     }

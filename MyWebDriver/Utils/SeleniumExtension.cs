@@ -18,11 +18,30 @@ namespace MyWebDriver.Utils
             {
                 webDriverWait.Until(waitFunction);
             }
-            catch
+            catch(Exception e)
             {
 
             }
         }
+        public static T Wait<T>(this IWebDriver webdriver, Func<IWebDriver, T> waitFunction, TimeSpan timeout)
+        {
+            WebDriverWait webDriverWait = new WebDriverWait(webdriver, timeout);
+            try
+            {
+                return webDriverWait.Until(waitFunction);
+            }
+            catch (Exception e)
+            {
+                return default(T);
+            }
+        }
+
+        public static void WaitAlert(this IWebDriver webDriver, bool isPresent, TimeSpan timeout)
+        {
+            WebDriverWait webDriverWait = new WebDriverWait(webDriver, timeout);
+            webDriverWait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.AlertState(isPresent));
+        }
+        
 
         public static void WaitTopPage(this IWebDriver webDriver)
         {
@@ -74,10 +93,59 @@ namespace MyWebDriver.Utils
             webDriver.ExcuteJavascript(script, out objectReturn);
             return Convert.ToBoolean(objectReturn);
         }
+
+        
+
         public static IWebElement WaitToVisibleElement(this IWebDriver webdriver, By by, TimeSpan timeout)
         {
             WebDriverWait webDriverWait = new WebDriverWait(webdriver, timeout);
-            return webDriverWait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(by));            
+            try
+            {
+                return webDriverWait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(by));
+            }
+            catch
+            {
+                return null;
+            }
+                       
+        }
+
+        public static IWebElement WaitElementCanClickable(this IWebDriver webDriver, By by, TimeSpan timeout)
+        {
+            WebDriverWait webDriverWait = new WebDriverWait(webDriver, timeout);
+            try
+            {
+                return webDriverWait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementToBeClickable(by));
+            }
+            catch
+            {
+                return null;
+            }
+            
+        }
+
+        public static bool WaitElementDisapear(this IWebDriver webdriver, By by, TimeSpan timeout)
+        {
+            WebDriverWait webDriverWait = new WebDriverWait(webdriver, timeout);
+            try
+            {
+                return webDriverWait.Until(driver => {
+                    try
+                    {
+                        var element = driver.FindElement(by);
+                        if (element.Displayed == false) return true;
+                        return false;
+                    }
+                    catch
+                    {
+                        return true;
+                    }
+                });
+            }
+            catch
+            {
+                return false;
+            }
         }
         public static void WaitToVisibleElement(this IWebDriver webdriver, IWebElement webElement, TimeSpan timeout)
         {
@@ -193,6 +261,32 @@ namespace MyWebDriver.Utils
             return new Rectangle(location, size);
         }
 
+        public static void StopPageLoading(this IWebDriver webDriver)
+        {
+            webDriver.ExcuteJavascript("return window.stop");
+        }
 
+        public static List<System.Net.Cookie> GetCookie(this IWebDriver webdirver)
+        {
+            StopPageLoading(webdirver);
+            var cookiesOnSelenium = webdirver.Manage().Cookies.AllCookies;
+            List<System.Net.Cookie> cookies = new List<System.Net.Cookie>();
+
+            foreach (var ck in cookiesOnSelenium)
+            {
+                System.Net.Cookie cookie = new System.Net.Cookie();
+                cookie.Domain = ck.Domain;
+                cookie.Name = ck.Name;
+                cookie.Value = ck.Value;
+                cookie.HttpOnly = ck.IsHttpOnly;
+                cookie.Expires = ck.Expiry ?? DateTime.Now;
+                cookie.Expired = ck.Expiry == default(DateTime) ? true : ck.Expiry < DateTime.Now;
+                cookie.Path = ck.Path;
+                cookies.Add(cookie);
+            }
+
+            return cookies;
+        }
+        
     }
 }
